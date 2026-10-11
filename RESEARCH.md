@@ -24,6 +24,16 @@ String descriptors (empty via `HidD_GetProductString` et al., but recoverable th
 | Scanner (wired) | `STM32 Custm HID` | `STMicroelectronics` | `0123456789AB` (placeholder) |
 | Receiver (2.4 GHz dongle) | `USB HID Keyboard` | `ARM CM0` | `0123456789AB` (placeholder) |
 
+**Firmware version** (by scanning the "Get firmware version" configuration barcode from the manual, section 1.3):
+
+```
+MH32_WX_2.4GBT_V1.1b-240711
+```
+
+Read as: `MH32` (device family) · `WX` (wireless) · `2.4GBT` (2.4 GHz radio) · `V1.1b`, build `2024-07-11`. Notably this is a **2024 build that still STALLs GET_REPORT** — the vendor never adopted the ST USB Middleware v2.11.0 fix; the CubeMX-era CustomHID template was carried forward.
+
+**Product manual** (KEFAR KR-H4 / KR-H4W User Guide, 68 pp.) documents the OEM scan engine inside: the **M22 2D imager module by Think-out**. The manual is a settings-barcode reference (symbologies, prefix/suffix, trigger modes, USB-HID / virtual-COM / TTL / HID-TTL / PS2 output modes) — it does **not** document the battery or the vendor `0xFFA0` interface, so the reverse-engineered findings below remain the only source on those.
+
 **The two units are built on different MCUs**: the scanner on an ST part (the `"STM32 Custm HID"` typo suggests an unmodified CubeMX template), the receiver on a generic ARM Cortex-M0. Both share the placeholder serial `0123456789AB`, which is what produces the duplicate-instance-ID noise (Event 56) when both are connected.
 
 - `MI_00` is a plain boot keyboard: scan data is injected as keystrokes.
@@ -93,7 +103,7 @@ Requests for **report IDs 1, 2 and 3 all succeed** and return an **identical 15-
 - Report IDs 1, 2, 3 → **`err=31` (`ERROR_GEN_FAILURE`, i.e. USB STALL)**
 - Report IDs 0, 4, 5 → `err=87` (invalid ID, as above)
 
-So the scanner firmware accepts the vendor interface in its descriptor but does not answer `GET_REPORT`. Working hypothesis (not confirmed): the STM32 CubeMX Custom-HID template older than USB Middleware **v2.11.0** (Oct 2022), whose changelog line is *"USB CustomHID Class: Add support of Get Report control request"*. Note the product string typo `"STM32 Custm HID"`, consistent with an untouched CubeMX template.
+So the scanner firmware accepts the vendor interface in its descriptor but does not answer `GET_REPORT`. The firmware build string `MH32_WX_2.4GBT_V1.1b-240711` (from the manual's version-query barcode) shows this behaviour survived into a **July 2024 build** — the vendor never picked up ST's USB Middleware **v2.11.0** (Oct 2022) changelog line *"USB CustomHID Class: Add support of Get Report control request"*. Note the product string typo `"STM32 Custm HID"`, consistent with an untouched CubeMX template.
 
 ---
 
