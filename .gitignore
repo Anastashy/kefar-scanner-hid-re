@@ -1,0 +1,7 @@
+# Research artefacts, not needed at runtime
+*.log
+*.csv
+*.pcap
+*.pcapng
+__pycache__/
+*.pyc
